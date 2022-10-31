@@ -6,11 +6,10 @@ import (
 )
 
 var (
-	// Time to live of cache key.
-	DefaultTTL = time.Second * 30
-	// Error message means that key does not exist.
+	defaultTTL = time.Second * 30
+	// ErrKeyNotExist means that key doesn't exist.
 	ErrKeyNotExist = errors.New("key does not exist.")
-	// Error message means key is expiried.
+	// ErrKeyExpiry means key is expiried.
 	ErrKeyExpiry = errors.New("key expiry.")
 )
 
