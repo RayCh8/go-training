@@ -1,7 +1,13 @@
 package localcache
 
 import (
+	"sync"
 	"time"
+)
+
+var (
+	timeBefore = time.Time.Before
+	timeNow    = time.Now
 )
 
 type entry struct {
@@ -10,17 +16,21 @@ type entry struct {
 }
 
 type cache struct {
+	l  sync.RWMutex
 	es map[string]*entry
 }
 
 func (c *cache) Get(key string) (interface{}, error) {
+	c.l.RLock()
+	defer c.l.RUnlock()
+
 	e, ok := c.es[key]
 
 	if !ok {
 		return nil, ErrKeyNotExist
 	}
 
-	if e.expiry.Before(time.Now()) {
+	if timeBefore(e.expiry, timeNow()) {
 		delete(c.es, key)
 		return nil, ErrKeyExpiry
 	}
@@ -29,19 +39,20 @@ func (c *cache) Get(key string) (interface{}, error) {
 }
 
 func (c *cache) Set(key string, val interface{}) {
+	c.l.Lock()
+	defer c.l.Unlock()
+
 	e := entry{
 		val:    val,
-		expiry: time.Now().Add(DefaultTTL),
+		expiry: timeNow().Add(defaultTTL),
 	}
 
 	c.es[key] = &e
 }
 
 // New return Cache instance
-func New() cache {
-	c := cache{
+func New() Cache {
+	return &cache{
 		es: make(map[string]*entry),
 	}
-
-	return c
 }
